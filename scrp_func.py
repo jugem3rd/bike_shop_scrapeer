@@ -4,7 +4,12 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+
 def bike_info_url_getter(target_url):
+    """
+    指定されたショップのURLに記載されている商品(バイク)の詳細ページのURLを取得
+    URLをリスト化して返す
+    """
     driver = webdriver.Chrome()
     driver.get(target_url)
 
@@ -51,8 +56,13 @@ def bike_info_url_getter(target_url):
 
     return bike_url_list
 
+
 def bike_detail_getter(aiohttp_results, url_list):
+    """
+    バイクの詳細が記載されたURLから必要な情報を取得して辞書に格納して返す
+    """
     price_list = []
+    total_price_list = []
     maker_list = []
     model_list = []
     displacement_list = []
@@ -60,10 +70,15 @@ def bike_detail_getter(aiohttp_results, url_list):
     for result in aiohttp_results:
         soup = BeautifulSoup(result, "html.parser")
 
-        # 価格を取得
+        # 本体価格を取得
         price_tag = soup.find('p', string='本体価格').find_next().find_next()
         price_value = price_tag.text
         price_list.append(price_value)
+
+        # 乗り出し価格を取得
+        total_price_tag = soup.find('p', string='乗り出し価格').find_next().find_next()
+        total_price_value = total_price_tag.text
+        total_price_list.append(total_price_value)
 
         # メーカー名を取得
         maker_tag = soup.find('th', string='メーカー').find_next()
@@ -80,11 +95,13 @@ def bike_detail_getter(aiohttp_results, url_list):
         displacement_value = displacement_tag.text
         displacement_list.append(displacement_value)
 
-    bike_data = {'価格': price_list,
-                 'メーカー': maker_list,
-                 'モデル名': model_list,
-                 '排気量': displacement_list,
-                 '掲載ページ': url_list}
+    bike_data = {
+        'メーカー': maker_list,
+        'モデル名': model_list,
+        '排気量': displacement_list,
+        '本体価格(万円)': price_list,
+        '乗り出し価格(万円)': total_price_list,
+        '掲載ページ': url_list
+    }
 
     return bike_data
-
